@@ -1,0 +1,41 @@
+{
+  "name": "style-spot",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "start": "node server/main.js",
+    "server": "nodemon server/main.js",
+    "client": "npm run dev --prefix client",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "data:import": "node server/seeder.js",
+    "data:destroy": "node server/seeder.js -d"
+  },
+  "imports": {
+    "#config/*": "./server/config/*",
+    "#data/*": "./server/data/*",
+    "#models/*": "./server/models/*",
+    "#routes/*": "./server/routes/*",
+    "#middlewares/*": "./server/middlewares/*",
+    "#controllers/*": "./server/controllers/*",
+    "#utils/*": "./server/utils/*"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "colors": "^1.4.0",
+    "concurrently": "^10.0.3",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.7.4",
+    "morgan": "^1.11.0",
+    "nodemon": "^3.1.14"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^8.0.2"
+  }
+}
