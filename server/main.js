@@ -12,8 +12,6 @@ import { errorHandler } from "#middlewares/error.middleware.js";
 
 dotenv.config();
 
-connectDB();
-
 const port = process.env.PORT || 5000;
 
 const app = express();
@@ -22,6 +20,12 @@ app.use(express.json()); // Request body parsing
 app.use(cookieParser()); // Cookies parsing and reading
 
 app.use(morgan("dev"));
+
+// Ensure database connection for requests
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
 
 app.get("/", (req, res) => {
   res.json({ message: "API is running..." });
@@ -33,9 +37,13 @@ app.use("/api/v1/orders", orderRoutes);
 
 app.use(errorHandler);
 
-app.listen(port, () => {
-  console.log(
-    `Server is running in ${process.env.NODE_ENV} mode on port ${port}`.cyan
-      .bold,
-  );
-});
+if (!process.env.VERCEL) {
+  app.listen(port, () => {
+    console.log(
+      `Server is running in ${process.env.NODE_ENV} mode on port ${port}`.cyan
+        .bold,
+    );
+  });
+}
+
+export default app;
