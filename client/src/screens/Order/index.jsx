@@ -1,4 +1,7 @@
+import { useEffect } from "react";
+import { toast } from "react-toastify";
 import { Link, useParams } from "react-router-dom";
+import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
 
 import {
   CheckBadgeIcon,
@@ -7,7 +10,11 @@ import {
 
 import Alert from "@components/Alert";
 import Loader from "@components/Loader";
-import { useGetOrderDetailsQuery } from "@slices/orderApiSlice";
+import {
+  useGetOrderDetailsQuery,
+  useGetPayPalClientIdQuery,
+  usePayOrderMutation,
+} from "@slices/orderApiSlice";
 
 const OrderScreen = () => {
   const { id: orderId } = useParams();
@@ -16,8 +23,71 @@ const OrderScreen = () => {
     data: order,
     isLoading,
     error,
-    // refetch,
+    refetch,
   } = useGetOrderDetailsQuery(orderId);
+
+  const [payOrder, { isLoading: loadingPay }] = usePayOrderMutation();
+
+  const [{ isPending }, paypalDispatch] = usePayPalScriptReducer();
+
+  const {
+    data: paypal,
+    isLoading: loadingPayPal,
+    error: errorPayPal,
+  } = useGetPayPalClientIdQuery();
+
+  useEffect(() => {
+    if (!errorPayPal && !loadingPayPal && paypal?.clientId) {
+      const loadPayPalScript = async () => {
+        paypalDispatch({
+          type: "resetOptions",
+          value: {
+            "client-id": paypal.clientId,
+            currency: "USD",
+          },
+        });
+      };
+
+      if (order && !order.isPaid) {
+        if (!window.paypal) {
+          loadPayPalScript();
+        }
+      }
+    }
+  }, [order, paypal, paypalDispatch, loadingPay, errorPayPal, loadingPayPal]);
+
+  const onApprove = (data, actions) => {
+    return actions.order.capture().then(async function (details) {
+      try {
+        console.log(details);
+        await payOrder({ id: orderId, details });
+        refetch();
+        toast.success("Order paid successfully");
+      } catch (error) {
+        toast.error(error?.data?.message || error?.error);
+      }
+    });
+  };
+
+  const onError = (error) => {
+    toast.error(error?.data?.message || error?.error);
+  };
+
+  const createOrder = (data, actions) => {
+    return actions.order
+      .create({
+        purchase_units: [
+          {
+            amount: {
+              value: order.totalPrice,
+            },
+          },
+        ],
+      })
+      .then((orderId) => {
+        return orderId;
+      });
+  };
 
   return isLoading ? (
     <Loader />
@@ -64,7 +134,6 @@ const OrderScreen = () => {
                   </div>
                 </dd>
               </div>
-
               <div>
                 <dt className="font-medium text-slate-900">Payment</dt>
                 <dd className="mt-2">
@@ -74,12 +143,12 @@ const OrderScreen = () => {
 
                   <div className="mt-4">
                     {order?.isPaid ? (
-                      <span className="flex items-center gap-1.5 text-green-500">
+                      <span className="flex items-center gap-1.5 text-green-600">
                         <CheckBadgeIcon className="h-4 w-4 text-green-500" />
                         <span>Paid</span>
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1.5 text-red-500">
+                      <span className="flex items-center gap-1.5 text-red-600">
                         <ExclamationTriangleIcon className="h-4 w-4 text-red-500" />
                         <span>Not Paid</span>
                       </span>
@@ -124,14 +193,14 @@ const OrderScreen = () => {
 
           <div className="mt-14">
             <h2 className="text-lg font-medium text-slate-900">
-              Order Summary
+              Order summary
             </h2>
 
             <div className="mt-4 rounded-lg border border-slate-200 bg-white shadow-sm">
               <dl className="space-y-6 border-t border-gray-200 px-4 py-6 sm:px-6">
-                <div classame="flex items-center justify-between">
+                <div className="flex items-center justify-between">
                   <dt className="text-sm">Items</dt>
-                  <dd className="text-sm font-medium text-gray-500">
+                  <dd className="text-sm font-medium text-gray-900">
                     ₹{order.itemsPrice}
                   </dd>
                 </div>
@@ -149,6 +218,7 @@ const OrderScreen = () => {
                     ₹{order.taxPrice}
                   </dd>
                 </div>
+
                 <div className="flex items-center justify-between">
                   <dt className="text-sm">Total</dt>
                   <dd className="text-sm font-medium text-gray-900">
@@ -156,6 +226,34 @@ const OrderScreen = () => {
                   </dd>
                 </div>
               </dl>
+
+              <div className="space-y-6 border-t border-slate-200 px-4 py-6 sm:px-6">
+                {!order.isPaid ? (
+                  <>
+                    {loadingPay && <Loader />}
+                    {isPending ? (
+                      <Loader />
+                    ) : (
+                      <div>
+                        <PayPalButtons
+                          createOrder={createOrder}
+                          onApprove={onApprove}
+                          onError={onError}
+                        />
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div>
+                    <Link
+                      to="/"
+                      className="flex w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors"
+                    >
+                      Continue Shopping
+                    </Link>
+                  </div>
+                )}
+              </div>
 
               {isLoading && <Loader />}
             </div>
