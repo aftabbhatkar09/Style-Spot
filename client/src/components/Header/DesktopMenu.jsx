@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useLogoutMutation } from "@slices/userApiSlice";
 
-import { ShoppingBag, Tag, User } from "lucide-react";
+import { ShoppingBag, Tag, User, Settings } from "lucide-react";
 
 const DesktopMenu = () => {
   const dispatch = useDispatch();
@@ -14,7 +14,10 @@ const DesktopMenu = () => {
   const { cartItems } = useSelector((state) => state.cart);
 
   const [isOpen, setIsOpen] = useState(false);
+  const [adminIsOpen, setAdminIsOpen] = useState(false);
+
   const menuRef = useRef(null);
+  const adminMenuRef = useRef(null);
 
   const [logoutApiCall] = useLogoutMutation();
 
@@ -33,6 +36,10 @@ const DesktopMenu = () => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
         setIsOpen(false);
       }
+
+      if (adminMenuRef.current && !adminMenuRef.current.contains(e.target)) {
+        setAdminIsOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -50,6 +57,19 @@ const DesktopMenu = () => {
       >
         <Tag className="h-4 w-4" strokeWidth={2} />
         categories
+      </Link>
+
+      <Link
+        to="/cart"
+        className="flex items-center gap-1 text-sm font-semibold text-slate-950 hover:text-slate-600 transition-all"
+      >
+        <ShoppingBag className="h-4 w-4" strokeWidth={2} />
+        cart
+        {cartItems.length > 0 && (
+          <span className="min-w-6 min-h-6 flex items-center justify-center rounded-full bg-indigo-500 text-center text-sm font-semibold text-white">
+            {cartItems.length}
+          </span>
+        )}
       </Link>
 
       {userInfo ? (
@@ -78,6 +98,12 @@ const DesktopMenu = () => {
               >
                 Profile
               </Link>
+              <Link
+                to="/my-orders"
+                className="block px-4 py-2 text-sm text-gray-700 transition-all hover:bg-gray-200 focus:bg-gray-300"
+              >
+                My Orders
+              </Link>
               <button
                 onClick={handleLogout}
                 className="block w-full px-4 py-2 text-left text-sm text-gray-700 transition-all hover:bg-gray-200 focus:bg-gray-300"
@@ -97,18 +123,39 @@ const DesktopMenu = () => {
         </Link>
       )}
 
-      <Link
-        to="/cart"
-        className="flex items-center gap-1 text-sm font-semibold text-slate-950 hover:text-slate-600 transition-all"
-      >
-        <ShoppingBag className="h-4 w-4" strokeWidth={2} />
-        cart
-        {cartItems.length > 0 && (
-          <span className="min-w-6 min-h-6 flex items-center justify-center rounded-full bg-indigo-500 text-center text-sm font-semibold text-white">
-            {cartItems.length}
-          </span>
-        )}
-      </Link>
+      {userInfo && userInfo.isAdmin && (
+        <div className="relative z-50" ref={adminMenuRef}>
+          <button
+            onClick={() => setAdminIsOpen(!adminIsOpen)}
+            className="focus:outline-offset-3 rounded-full bg-gray-200 p-2 focus:outline-2"
+          >
+            <Settings className="h-5 w-5" />
+          </button>
+
+          {adminIsOpen && (
+            <nav className="absolute right-0 top-10 min-w-48 rounded-lg bg-white shadow-md">
+              <Link
+                to="/admin/orderslist"
+                className="block px-4 py-2 text-sm text-gray-700 transition-all hover:bg-gray-200 focus:bg-gray-300"
+              >
+                All Orders
+              </Link>
+              <Link
+                to="/admin/userslist"
+                className="block px-4 py-2 text-sm text-gray-700 transition-all hover:bg-gray-200 focus:bg-gray-300"
+              >
+                All Users
+              </Link>
+              <Link
+                to="/admin/productslist"
+                className="block px-4 py-2 text-sm text-gray-700 transition-all hover:bg-gray-200 focus:bg-gray-300"
+              >
+                All Products
+              </Link>
+            </nav>
+          )}
+        </div>
+      )}
     </nav>
   );
 };

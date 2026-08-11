@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { toast } from "react-toastify";
+import { useSelector } from "react-redux";
 import { Link, useParams } from "react-router-dom";
 import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
 
@@ -14,6 +15,7 @@ import {
   useGetOrderDetailsQuery,
   useGetPayPalClientIdQuery,
   usePayOrderMutation,
+  useDeliverOrderMutation,
 } from "@slices/orderApiSlice";
 
 const OrderScreen = () => {
@@ -26,7 +28,12 @@ const OrderScreen = () => {
     refetch,
   } = useGetOrderDetailsQuery(orderId);
 
+  const { userInfo } = useSelector((state) => state.auth);
+
   const [payOrder, { isLoading: loadingPay }] = usePayOrderMutation();
+
+  const [deliverOrder, { isLoading: loadingDeliver }] =
+    useDeliverOrderMutation();
 
   const [{ isPending }, paypalDispatch] = usePayPalScriptReducer();
 
@@ -87,6 +94,16 @@ const OrderScreen = () => {
       .then((orderId) => {
         return orderId;
       });
+  };
+
+  const handleDeliver = async () => {
+    try {
+      await deliverOrder(orderId);
+      refetch();
+      toast.success("Order marked as delivered");
+    } catch (error) {
+      toast.error(error?.data?.message || error?.error);
+    }
   };
 
   return isLoading ? (
@@ -244,15 +261,36 @@ const OrderScreen = () => {
                     )}
                   </>
                 ) : (
-                  <div>
-                    <Link
-                      to="/"
-                      className="flex w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors"
-                    >
-                      Continue Shopping
-                    </Link>
-                  </div>
+                  <>
+                    {userInfo && !userInfo.isAdmin && (
+                      <div>
+                        <Link
+                          to="/"
+                          className="flex w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors"
+                        >
+                          Continue Shopping
+                        </Link>
+                      </div>
+                    )}
+                  </>
                 )}
+
+                <div className="mt-6">
+                  {loadingDeliver && <Loader />}
+
+                  {userInfo &&
+                    userInfo.isAdmin &&
+                    order.isPaid &&
+                    !order.isDelivered && (
+                      <button
+                        onClick={handleDeliver}
+                        type="submit"
+                        className="w-full rounded-md border border-transparent bg-indigo-600 px-4 py-3 text-base font-medium text-white shadow-sm transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-50"
+                      >
+                        Mark as delivered
+                      </button>
+                    )}
+                </div>
               </div>
 
               {isLoading && <Loader />}
