@@ -1,18 +1,52 @@
+import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 
 import Alert from "@components/Alert";
 import Loader from "@components/Loader";
-import { useGetProductsQuery } from "@slices/productApiSlice";
+import {
+  useGetProductsQuery,
+  useCreateProductMutation,
+} from "@slices/productApiSlice";
 
 const ProductListScreen = () => {
-  const { data: products, isLoading, error } = useGetProductsQuery();
+  const { data: products, isLoading, error, refetch } = useGetProductsQuery();
+
+  const [createProduct, { isLoading: loadingCreate }] =
+    useCreateProductMutation();
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure?")) {
+      console.log("Delete product with id:", id);
+    }
+  };
+
+  const handleCreateProduct = async () => {
+    if (window.confirm("Are you sure you want to create a new product?")) {
+      try {
+        await createProduct();
+        refetch();
+      } catch (error) {
+        toast.error(error?.data?.message || error?.message);
+      }
+    }
+  };
 
   return (
-    <div classNAme="bg-white">
+    <div className="bg-white">
       <div className="mx-auto max-w-2xl px-4 pb-24 pt-16 sm:px-6 lg:max-w-7xl lg:px-8">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-          All Products
-        </h1>
+        <div className="flex justify-between">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+            All Products
+          </h1>
+
+          <button
+            onClick={handleCreateProduct}
+            type="submit"
+            className="rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-base font-medium text-white shadow-sm transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-50"
+          >
+            {loadingCreate ? "Creating..." : "Create Product"}
+          </button>
+        </div>
 
         {isLoading ? (
           <Loader />
@@ -58,7 +92,7 @@ const ProductListScreen = () => {
                       scope="col"
                       className="relative py-3.5 pl-3 pr-4 sm:pr-0"
                     >
-                      <span classNAme="sr-only">Buttons</span>
+                      <span className="sr-only">Buttons</span>
                     </th>
                   </tr>
                 </thead>
@@ -75,7 +109,7 @@ const ProductListScreen = () => {
                           {product.name}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          <span classNAme="font-bold">₹{product.price}</span>
+                          <span className="font-bold">₹{product.price}</span>
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           {product.category}
@@ -90,6 +124,13 @@ const ProductListScreen = () => {
                           >
                             Edit
                           </Link>
+                          <button
+                            onClick={() => handleDelete(product._id)}
+                            type="button"
+                            className="ml-3 rounded bg-red-50 px-2 py-1 text-sm font-semibold text-red-700 shadow-sm ring-1 ring-inset ring-red-300 hover:bg-red-50"
+                          >
+                            Delete
+                          </button>
                         </td>
                       </tr>
                     ))
