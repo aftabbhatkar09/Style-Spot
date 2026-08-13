@@ -23,6 +23,7 @@ import PaymentScreen from "@screens/PaymentScreen";
 import PlaceOrderScreen from "@screens/PlaceOrder";
 import PrivateRoute from "@components/PrivateRoute";
 import ProductDetails from "@screens/ProductDeatils";
+import ProductListScreen from "@screens/ProductList";
 
 const router = createBrowserRouter([
   {
@@ -88,6 +89,10 @@ const router = createBrowserRouter([
           {
             path: "/admin/orderslist",
             element: <OrderListScreen />,
+          },
+          {
+            path: "/admin/productslist",
+            element: <ProductListScreen />,
           },
         ],
       },
