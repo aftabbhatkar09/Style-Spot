@@ -24,6 +24,7 @@ import PlaceOrderScreen from "@screens/PlaceOrder";
 import PrivateRoute from "@components/PrivateRoute";
 import ProductDetails from "@screens/ProductDeatils";
 import ProductListScreen from "@screens/ProductList";
+import ProductEditScreen from "@screens/ProductEdit";
 
 const router = createBrowserRouter([
   {
@@ -93,6 +94,10 @@ const router = createBrowserRouter([
           {
             path: "/admin/productslist",
             element: <ProductListScreen />,
+          },
+          {
+            path: "/admin/product/:id/edit",
+            element: <ProductEditScreen />,
           },
         ],
       },
