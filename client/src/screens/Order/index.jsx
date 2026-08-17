@@ -53,6 +53,10 @@ const OrderScreen = () => {
             currency: "USD",
           },
         });
+        paypalDispatch({
+          type: "setLoadingStatus",
+          value: "pending",
+        });
       };
 
       if (order && !order.isPaid) {
